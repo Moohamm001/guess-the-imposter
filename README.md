@@ -1,5 +1,7 @@
 # 🕵️ Guess the Imposter — Online Multiplayer
 
+**▶️ Play now: https://guess-the-imposter-u50c.onrender.com/**
+
 Everyone plays on their **own phone** from anywhere. One person creates a room and shares
 the 4-letter code (or an invite link); everyone else joins. Roles are dealt privately to each
 phone, there's a synced discussion timer, and everyone votes from their device.
@@ -13,6 +15,9 @@ Open `http://localhost:3000` on the host machine, and `http://<host-LAN-IP>:3000
 on the same WiFi.
 
 ## Deploy online for free (play from anywhere)
+
+> **Already deployed** at https://guess-the-imposter-u50c.onrender.com/ via Render.
+> Pushing to the `main` branch redeploys automatically. The steps below document how it was set up.
 
 ### Option A — Render (recommended, uses included `render.yaml`)
 1. Put this folder on GitHub:

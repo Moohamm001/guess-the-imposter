@@ -20,7 +20,18 @@ const WORDS = {
   "Places": ["Beach","Airport","Hospital","Library","Casino","Zoo","School","Stadium","Castle","Museum","Cinema","Restaurant","Gym","Bank","Park","Mall","Farm","Submarine"],
   "Jobs": ["Doctor","Teacher","Chef","Pilot","Firefighter","Detective","Astronaut","Plumber","Lawyer","Barber","Farmer","Dentist","Magician","Nurse","Mechanic","Photographer","Lifeguard","Judge"],
   "Sports": ["Soccer","Basketball","Tennis","Boxing","Golf","Surfing","Skiing","Bowling","Archery","Hockey","Cricket","Karate","Cycling","Volleyball","Swimming","Skateboarding","Fencing","Baseball"],
-  "Around the House": ["Toothbrush","Refrigerator","Pillow","Umbrella","Mirror","Candle","Vacuum","Blanket","Kettle","Remote","Ladder","Doormat","Lightbulb","Scissors","Bucket","Toaster","Clock","Hammer"]
+  "Around the House": ["Toothbrush","Refrigerator","Pillow","Umbrella","Mirror","Candle","Vacuum","Blanket","Kettle","Remote","Ladder","Doormat","Lightbulb","Scissors","Bucket","Toaster","Clock","Hammer"],
+  "Fruits & Veggies": ["Strawberry","Pineapple","Broccoli","Mango","Carrot","Banana","Pumpkin","Cucumber","Cherry","Grapes","Onion","Potato","Spinach","Peach","Corn","Tomato","Mushroom","Coconut"],
+  "Transport": ["Bicycle","Helicopter","Submarine","Motorcycle","Train","Rocket","Sailboat","Tractor","Ambulance","Skateboard","Hot Air Balloon","Bus","Scooter","Canoe","Jet Ski","Truck","Taxi","Ferry"],
+  "Music": ["Guitar","Piano","Violin","Drums","Trumpet","Saxophone","Microphone","Flute","Harp","DJ","Concert","Headphones","Choir","Ukulele","Banjo","Karaoke","Cello","Accordion"],
+  "Video Games": ["Minecraft","Mario","Fortnite","Pokemon","Zelda","Tetris","Pac-Man","Sonic","Roblox","Among Us","Call of Duty","FIFA","Candy Crush","Halo","Angry Birds","Street Fighter","Pong","Sims"],
+  "Superheroes": ["Superman","Spider-Man","Batman","Iron Man","Wonder Woman","Hulk","Thor","Captain America","Flash","Black Panther","Aquaman","Deadpool","Wolverine","Spider-Gwen","Captain Marvel","Green Lantern","Doctor Strange","Ant-Man"],
+  "Nature & Weather": ["Rainbow","Thunderstorm","Volcano","Waterfall","Tornado","Glacier","Desert","Earthquake","Snowflake","Lightning","Hurricane","Rainforest","Canyon","Avalanche","Sunset","Tsunami","Cave","Coral Reef"],
+  "Clothing": ["Sneakers","Jacket","Scarf","Sunglasses","Pajamas","Necktie","Gloves","Hoodie","Boots","Hat","Socks","Belt","Raincoat","Swimsuit","Mittens","Sandals","Sweater","Backpack"],
+  "Mythical Creatures": ["Dragon","Unicorn","Mermaid","Werewolf","Phoenix","Vampire","Zombie","Griffin","Centaur","Yeti","Fairy","Goblin","Cyclops","Kraken","Minotaur","Pegasus","Troll","Ghost"],
+  "Space": ["Astronaut","Galaxy","Black Hole","Comet","Saturn","Telescope","Spaceship","Meteor","Moon","Satellite","Asteroid","Constellation","Nebula","Sun","Mars","Space Station","Eclipse","Alien"],
+  "Holidays": ["Halloween","Christmas","Birthday","New Year","Easter","Thanksgiving","Valentine's Day","Fireworks","Wedding","Carnival","Picnic","Costume Party","Graduation","Camping Trip","Road Trip","Festival","Parade","Sleepover"],
+  "School": ["Math","History","Science","Homework","Recess","Backpack","Chalkboard","Cafeteria","Pop Quiz","Field Trip","Detention","Locker","Report Card","Gym Class","Library","Principal","Yearbook","Spelling Bee"]
 };
 const CATEGORIES = ["Random Mix", ...Object.keys(WORDS)];
 

@@ -11,17 +11,6 @@ const TEAM_SIZES = {
 const EVIL_ROLES = ["Assassin", "Morgana", "Mordred", "Oberon", "Minion of Mordred"];
 const isEvilRole = r => EVIL_ROLES.includes(r);
 
-const ROLE_DESC = {
-  "Merlin": "You know who the Evil players are — but if the Assassin identifies you at the end, Evil wins. Stay hidden.",
-  "Percival": "You can see Merlin (and Morgana, if present) — but not which is which. Protect the real Merlin.",
-  "Loyal Servant of Arthur": "A loyal member of Good. Complete 3 quests and find the spies.",
-  "Assassin": "Evil. If Good wins 3 quests, you get one shot to name Merlin and steal the win.",
-  "Morgana": "Evil. You appear as Merlin to Percival, sowing confusion.",
-  "Mordred": "Evil. You are hidden from Merlin — Merlin does NOT know you are Evil.",
-  "Oberon": "Evil. You don't know the other Evil players, and they don't know you.",
-  "Minion of Mordred": "Evil. Sabotage the quests or help assassinate Merlin."
-};
-
 const shuffle = a => { for (let i = a.length - 1; i > 0; i--) { const j = Math.floor(Math.random() * (i + 1)); [a[i], a[j]] = [a[j], a[i]]; } return a; };
 
 export default {
@@ -33,11 +22,9 @@ export default {
   normalizeSettings(room) {
     const s = room.settings;
     s.percival = !!s.percival; s.morgana = !!s.morgana; s.mordred = !!s.mordred; s.oberon = !!s.oberon;
-    // Morgana only makes sense with Percival
     if (s.morgana && !s.percival) s.percival = true;
     const n = room.players.length;
     const evil = EVIL_COUNT[n] || 2;
-    // Assassin is mandatory and takes one evil slot; cap optional evil specials to remaining slots
     let optionalEvil = ["morgana", "mordred", "oberon"].filter(k => s[k]);
     while (optionalEvil.length > evil - 1) { const drop = optionalEvil.pop(); s[drop] = false; }
   },
@@ -47,7 +34,6 @@ export default {
     const evil = EVIL_COUNT[n];
     const s = room.settings;
 
-    // build role list
     const evilRoles = ["Assassin"];
     if (s.morgana) evilRoles.push("Morgana");
     if (s.mordred) evilRoles.push("Mordred");
@@ -70,20 +56,19 @@ export default {
       phase: "night",
       roles, order,
       leaderIndex: 0,
-      round: 0,                    // 0-based quest index
-      questResults: [],            // booleans, completed quests
+      round: 0,
+      questResults: [],
       questSizes: sizes,
       failsRequired,
-      voteTrack: 0,                // consecutive rejected proposals
+      voteTrack: 0,
       proposedTeam: [],
       votes: {},
-      lastVote: null,             // { votes:{id:bool}, approved:bool, leaderName }
-      questCards: {},
-      lastQuest: null,            // { fails, passed, teamCount }
-      nightAck: {},               // playerId -> true
-      winner: null, winReason: "",
+      lastVote: null,
+      lastQuest: null,
+      nightAck: {},
+      winner: null, win: null,
       assassinTarget: null,
-      log: []
+      log: []   // structured events: {t, ...data}
     };
   },
 
@@ -109,7 +94,7 @@ export default {
       const view = {
         game: "avalon",
         phase: g.phase,
-        you: { role, roleDesc: ROLE_DESC[role], isEvil: isEvilRole(role), knowledge: knowledgeFor(p.id, g, nameOf) },
+        you: { role, isEvil: isEvilRole(role), knowledge: knowledgeFor(p.id, g, nameOf) },
         players: playersView,
         leaderId, leaderName: nameOf(leaderId),
         round: g.round, questNumber: g.round + 1,
@@ -120,21 +105,17 @@ export default {
         lastQuest: g.lastQuest,
         log: g.log.slice(-12),
         totalPlayers: connectedPlayers.length,
-        // night
         nightAckCount: Object.keys(g.nightAck).length,
         youAcked: !!g.nightAck[p.id],
-        // your action flags
         isLeader: p.id === leaderId,
         youVoted: g.votes[p.id] != null,
         votesIn: Object.keys(g.votes).length,
         onTeam: g.proposedTeam.includes(p.id),
-        youPlayedCard: g.questCards[p.id] != null,
-        cardsIn: Object.keys(g.questCards).length,
-        // assassinate
+        youPlayedCard: g.questCards ? g.questCards[p.id] != null : false,
+        cardsIn: g.questCards ? Object.keys(g.questCards).length : 0,
         assassinName: nameOf(Object.entries(g.roles).find(([, r]) => r === "Assassin")?.[0]),
         youAreAssassin: role === "Assassin",
-        // over
-        winner: g.winner, winReason: g.winReason,
+        winner: g.winner, win: g.win,
         reveal: g.winner ? g.order.map(id => ({ name: nameOf(id), role: g.roles[id] })) : null
       };
       io.to(p.id).emit("gameState", view);
@@ -151,7 +132,7 @@ export default {
       const allConnected = room.players.filter(p => p.connected);
       if (allConnected.every(p => g.nightAck[p.id])) {
         g.phase = "team";
-        g.log.push(`Night over. ${nm(room, leaderId)} is the first Leader.`);
+        g.log.push({ t: "night", leader: nm(room, leaderId) });
       }
       this.sync(room, io);
 
@@ -162,7 +143,7 @@ export default {
       g.proposedTeam = [...new Set(team)];
       g.votes = {};
       g.phase = "vote";
-      g.log.push(`${nm(room, leaderId)} proposes: ${g.proposedTeam.map(id => nm(room, id)).join(", ")}.`);
+      g.log.push({ t: "propose", leader: nm(room, leaderId), names: g.proposedTeam.map(id => nm(room, id)).join(", ") });
       this.sync(room, io);
 
     } else if (type === "vote" && g.phase === "vote") {
@@ -174,7 +155,7 @@ export default {
 
     } else if (type === "questCard" && g.phase === "quest" && g.proposedTeam.includes(me)) {
       let card = payload.card === "fail" ? "fail" : "success";
-      if (!isEvilRole(g.roles[me])) card = "success"; // Good must succeed
+      if (!isEvilRole(g.roles[me])) card = "success";
       g.questCards[me] = card;
       if (g.proposedTeam.every(id => g.questCards[id] != null)) resolveQuest(room, io, this);
       else this.sync(room, io);
@@ -183,16 +164,15 @@ export default {
       const targetRole = g.roles[payload.targetId];
       if (!targetRole) return;
       g.assassinTarget = payload.targetId;
-      if (targetRole === "Merlin") { g.winner = "evil"; g.winReason = `The Assassin found Merlin (${nm(room, payload.targetId)}). Evil wins!`; }
-      else { g.winner = "good"; g.winReason = `The Assassin guessed ${nm(room, payload.targetId)} — wrong! Good wins!`; }
+      if (targetRole === "Merlin") { g.winner = "evil"; g.win = { reason: "assassinated", name: nm(room, payload.targetId) }; }
+      else { g.winner = "good"; g.win = { reason: "assassin-miss", name: nm(room, payload.targetId) }; }
       g.phase = "over";
       this.sync(room, io);
     }
   },
 
-  onDisconnect(room, io, id) {
+  onDisconnect(room, io) {
     const g = room.game; if (!g) return;
-    // if waiting on this player's vote/card, re-check completion
     if (g.phase === "vote") {
       const connected = room.players.filter(p => p.connected);
       if (connected.length && connected.every(p => g.votes[p.id] != null)) resolveVote(room, io, this);
@@ -208,21 +188,16 @@ function nm(room, id) { return (room.players.find(p => p.id === id) || {}).name 
 function knowledgeFor(pid, g, nameOf) {
   const role = g.roles[pid];
   const entries = Object.entries(g.roles);
-  if (role === "Merlin") {
-    const seen = entries.filter(([id, r]) => isEvilRole(r) && r !== "Mordred").map(([id]) => nameOf(id));
-    return { note: "These players are Evil (Mordred is hidden):", names: seen };
-  }
+  if (role === "Merlin")
+    return { kind: "merlin", names: entries.filter(([, r]) => isEvilRole(r) && r !== "Mordred").map(([id]) => nameOf(id)) };
   if (role === "Percival") {
-    const seen = entries.filter(([id, r]) => r === "Merlin" || r === "Morgana").map(([id]) => nameOf(id));
-    const note = seen.length > 1 ? "One of these is Merlin (the other is Morgana):" : "This player is Merlin:";
-    return { note, names: shuffle(seen) };
+    const seen = entries.filter(([, r]) => r === "Merlin" || r === "Morgana").map(([id]) => nameOf(id));
+    return { kind: seen.length > 1 ? "percival" : "percival-solo", names: shuffle(seen) };
   }
-  if (isEvilRole(role) && role !== "Oberon") {
-    const seen = entries.filter(([id, r]) => isEvilRole(r) && r !== "Oberon" && id !== pid).map(([id]) => nameOf(id));
-    return { note: "Your fellow Evil players (Oberon, if any, is hidden):", names: seen };
-  }
-  if (role === "Oberon") return { note: "You are Evil, but you don't know your teammates — and they don't know you.", names: [] };
-  return { note: "You have no special knowledge. Trust carefully.", names: [] };
+  if (isEvilRole(role) && role !== "Oberon")
+    return { kind: "evil", names: entries.filter(([id, r]) => isEvilRole(r) && r !== "Oberon" && id !== pid).map(([id]) => nameOf(id)) };
+  if (role === "Oberon") return { kind: "oberon", names: [] };
+  return { kind: "none", names: [] };
 }
 
 function nextLeader(g) { g.leaderIndex = (g.leaderIndex + 1) % g.order.length; }
@@ -232,13 +207,13 @@ function resolveVote(room, io, self) {
   const values = g.order.map(id => g.votes[id]).filter(v => v != null);
   const approves = values.filter(v => v === true).length;
   const rejects = values.filter(v => v === false).length;
-  const approved = approves > rejects; // tie = reject
+  const approved = approves > rejects;
   g.lastVote = {
     approved,
     leaderName: nm(room, g.order[g.leaderIndex]),
     votes: g.order.map(id => ({ name: nm(room, id), approve: g.votes[id] === true }))
   };
-  g.log.push(`Vote: ${approves} approve / ${rejects} reject — ${approved ? "APPROVED" : "rejected"}.`);
+  g.log.push({ t: "vote", approve: approves, reject: rejects, approved });
 
   if (approved) {
     g.voteTrack = 0;
@@ -247,14 +222,12 @@ function resolveVote(room, io, self) {
   } else {
     g.voteTrack++;
     if (g.voteTrack >= 5) {
-      g.winner = "evil";
-      g.winReason = "Five team proposals were rejected in a row. Evil wins!";
-      g.phase = "over";
+      g.winner = "evil"; g.win = { reason: "five-rejects" }; g.phase = "over";
     } else {
       nextLeader(g);
       g.proposedTeam = [];
       g.phase = "team";
-      g.log.push(`Leader passes to ${nm(room, g.order[g.leaderIndex])} (rejected ${g.voteTrack}/5).`);
+      g.log.push({ t: "pass", leader: nm(room, g.order[g.leaderIndex]), track: g.voteTrack });
     }
   }
   self.sync(room, io);
@@ -268,17 +241,17 @@ function resolveQuest(room, io, self) {
   const passed = fails < required;
   g.questResults.push(passed);
   g.lastQuest = { fails, passed, teamCount: g.proposedTeam.length, required };
-  g.log.push(`Quest ${g.round + 1} ${passed ? "SUCCEEDED" : "FAILED"} (${fails} fail card${fails === 1 ? "" : "s"}).`);
+  g.log.push({ t: "quest", n: g.round + 1, passed, fails });
 
   const successes = g.questResults.filter(r => r).length;
   const failures = g.questResults.filter(r => !r).length;
 
   if (failures >= 3) {
-    g.winner = "evil"; g.winReason = "Three quests failed. Evil wins!"; g.phase = "over";
+    g.winner = "evil"; g.win = { reason: "three-fails" }; g.phase = "over";
   } else if (successes >= 3) {
     const hasAssassin = Object.values(g.roles).includes("Assassin");
-    if (hasAssassin) { g.phase = "assassinate"; g.log.push("Good completed 3 quests! The Assassin now hunts for Merlin..."); }
-    else { g.winner = "good"; g.winReason = "Good completed 3 quests. Good wins!"; g.phase = "over"; }
+    if (hasAssassin) { g.phase = "assassinate"; g.log.push({ t: "good3" }); }
+    else { g.winner = "good"; g.win = { reason: "three-quests" }; g.phase = "over"; }
   } else {
     g.round++;
     g.voteTrack = 0;

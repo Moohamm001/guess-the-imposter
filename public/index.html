@@ -83,6 +83,8 @@
     font-size:.9rem; opacity:0; transition:opacity .2s; pointer-events:none; z-index:99;}
   .toast.show{opacity:1;}
   .conn{position:fixed; top:8px; right:10px; font-size:.7rem; color:var(--muted);}
+  .langbtn{position:fixed; top:6px; left:10px; z-index:50; width:auto; padding:6px 12px; font-size:.8rem;
+    background:var(--card2); border:1px solid var(--line); color:var(--text); border-radius:999px;}
   .game-card{display:flex; gap:12px; align-items:center; text-align:left; background:var(--bg);
     border:2px solid var(--line); border-radius:14px; padding:12px; margin-bottom:8px; cursor:pointer; color:var(--text);}
   .game-card.sel{border-color:var(--accent); background:var(--card2);}
@@ -113,47 +115,48 @@
 </style>
 </head>
 <body>
+<button class="langbtn" id="langBtn">ไทย</button>
 <div class="conn" id="conn">connecting…</div>
 <div class="app">
-  <h1 id="title">🎉 Party Games Hub</h1>
-  <div class="tag" id="subtag">Play together on your own phones</div>
+  <h1 id="title" data-i18n="title">🎉 Party Games Hub</h1>
+  <div class="tag" id="subtag" data-i18n="subtag">Play together on your own phones</div>
 
   <!-- HOME -->
   <section id="home" class="screen active">
     <div class="card">
-      <label>Your name</label>
-      <input id="nameInput" type="text" placeholder="e.g. Alex" maxlength="16" autocomplete="off">
+      <label data-i18n="yourName">Your name</label>
+      <input id="nameInput" type="text" data-i18n-ph="namePh" maxlength="16" autocomplete="off">
     </div>
     <div class="stack">
-      <button class="btn-primary" id="createBtn">➕ Create a Room</button>
-      <div class="center muted small">— or join one —</div>
-      <input id="codeInput" type="text" placeholder="CODE" maxlength="4" autocomplete="off">
-      <button class="btn-blue" id="joinBtn">Join Room →</button>
+      <button class="btn-primary" id="createBtn" data-i18n="createRoom">➕ Create a Room</button>
+      <div class="center muted small" data-i18n="orJoin">— or join one —</div>
+      <input id="codeInput" type="text" data-i18n-ph="codePh" maxlength="4" autocomplete="off">
+      <button class="btn-blue" id="joinBtn" data-i18n="joinRoom">Join Room →</button>
     </div>
-    <div class="footer muted small">One person creates a room and shares the code. Everyone else joins from their own phone.</div>
+    <div class="footer muted small" data-i18n="homeFoot">One person creates a room and shares the code. Everyone else joins from their own phone.</div>
   </section>
 
   <!-- LOBBY -->
   <section id="lobby" class="screen">
     <div class="card center">
-      <div class="muted small">Room code — share this</div>
+      <div class="muted small" data-i18n="shareCode">Room code — share this</div>
       <div class="code-show" id="roomCode">----</div>
-      <button class="btn-ghost" id="copyLink" style="margin-top:8px">📋 Copy invite link</button>
+      <button class="btn-ghost" id="copyLink" data-i18n="copyLink" style="margin-top:8px">📋 Copy invite link</button>
     </div>
     <div class="card">
-      <div class="small muted" style="margin-bottom:6px">Players (<span id="playerCount">0</span>)</div>
+      <div class="small muted" style="margin-bottom:6px"><span data-i18n="players">Players</span> (<span id="playerCount">0</span>)</div>
       <ul class="plist" id="lobbyPlayers"></ul>
     </div>
     <div class="card">
-      <div class="small muted center" style="margin-bottom:8px">Choose a game</div>
+      <div class="small muted center" style="margin-bottom:8px" data-i18n="chooseGame">Choose a game</div>
       <div id="gamePicker"></div>
     </div>
     <div class="card" id="settingsCard" style="display:none">
-      <div class="small muted center" style="margin-bottom:6px">Game settings (host)</div>
+      <div class="small muted center" style="margin-bottom:6px" data-i18n="settingsHost">Game settings (host)</div>
       <div id="settingsBox"></div>
     </div>
     <button class="btn-primary" id="startBtn" style="display:none">Start Game</button>
-    <div class="center muted small" id="waitHost" style="display:none">Waiting for the host…</div>
+    <div class="center muted small" id="waitHost" style="display:none" data-i18n="waitHost">Waiting for the host…</div>
   </section>
 
   <!-- GAME (rendered by modules) -->
@@ -162,19 +165,37 @@
 <div class="toast" id="toast"></div>
 
 <script src="/socket.io/socket.io.js"></script>
+<script src="/i18n.js"></script>
 <script src="/games/imposter.js"></script>
 <script src="/games/avalon.js"></script>
 <script>
 const $ = id => document.getElementById(id);
 const socket = io();
+const t = (k, v) => window.I18N.t(k, v);
 window.GAMES = window.GAMES || {};
-let YOU = null, ROOM = null;
+let YOU = null, ROOM = null, LAST_STATE = null;
 
 const show = id => { document.querySelectorAll('.screen').forEach(s=>s.classList.remove('active')); $(id).classList.add('active'); };
-function toast(m){ const t=$('toast'); t.textContent=m; t.classList.add('show'); setTimeout(()=>t.classList.remove('show'),2500); }
+function toast(m){ const el=$('toast'); el.textContent=m; el.classList.add('show'); setTimeout(()=>el.classList.remove('show'),2500); }
 const isHost = () => ROOM && ROOM.hostId === YOU;
 const emitAction = (type, payload={}) => socket.emit('gameAction', { type, ...payload });
-window.HUB = { toast, emitAction, get you(){return YOU;}, get isHost(){return isHost();}, socket };
+window.HUB = { t, toast, emitAction, get you(){return YOU;}, get isHost(){return isHost();}, socket };
+
+/* ---- static i18n ---- */
+function applyStatic(){
+  document.querySelectorAll('[data-i18n]').forEach(el=> el.textContent = t(el.dataset.i18n));
+  document.querySelectorAll('[data-i18n-ph]').forEach(el=> el.placeholder = t(el.dataset.i18nPh));
+  $('langBtn').textContent = window.I18N.getLang()==='en' ? 'ไทย' : 'EN';
+  document.documentElement.lang = window.I18N.getLang();
+}
+$('langBtn').onclick = ()=> window.I18N.setLang(window.I18N.getLang()==='en'?'th':'en');
+document.addEventListener('langchange', ()=>{
+  applyStatic();
+  if(ROOM && ROOM.state==='lobby') renderLobby();
+  if($('game').classList.contains('active') && LAST_STATE && window.GAMES[LAST_STATE.game])
+    window.GAMES[LAST_STATE.game].render($('gameRoot'), LAST_STATE, window.HUB);
+});
+applyStatic();
 
 socket.on('connect', ()=>$('conn').textContent='online');
 socket.on('disconnect', ()=>$('conn').textContent='reconnecting…');
@@ -187,18 +208,18 @@ try{ const n=localStorage.getItem('hub_name'); if(n) $('nameInput').value=n; }ca
 function myName(){ const n=$('nameInput').value.trim(); try{localStorage.setItem('hub_name',n);}catch(e){} return n; }
 
 $('createBtn').onclick=()=>{
-  if(!myName()) return toast('Enter your name first');
+  if(!myName()) return toast(t('enterName'));
   socket.emit('createRoom',{name:myName()}, r=>{ if(r&&r.ok) YOU=r.youId; });
 };
 $('joinBtn').onclick=()=>{
-  if(!myName()) return toast('Enter your name first');
+  if(!myName()) return toast(t('enterName'));
   const code=$('codeInput').value.trim().toUpperCase();
-  if(code.length<4) return toast('Enter the 4-letter code');
-  socket.emit('joinRoom',{code,name:myName()}, r=>{ if(r&&r.ok) YOU=r.youId; else toast(r&&r.error||'Could not join'); });
+  if(code.length<4) return toast(t('enterCode'));
+  socket.emit('joinRoom',{code,name:myName()}, r=>{ if(r&&r.ok) YOU=r.youId; else toast(r&&r.error||t('couldNotJoin')); });
 };
 $('copyLink').onclick=()=>{
   const url=location.origin+'/?room='+ROOM.code;
-  if(navigator.clipboard) navigator.clipboard.writeText(url).then(()=>toast('Invite link copied!')).catch(()=>prompt('Copy:',url));
+  if(navigator.clipboard) navigator.clipboard.writeText(url).then(()=>toast(t('inviteCopied'))).catch(()=>prompt('Copy:',url));
   else prompt('Copy this link:',url);
 };
 $('startBtn').onclick=()=>socket.emit('startGame');
@@ -208,8 +229,10 @@ socket.on('room', room=>{
   ROOM = room;
   if(!YOU) return;
   if(room.state==='lobby') renderLobby();
-  // when ingame, the 'gameState' event drives the UI
 });
+
+function gameName(id){ const k='game.'+id+'.name'; const v=t(k); return v===k ? (ROOM.games.find(g=>g.id===id)||{}).name : v; }
+function gameBlurb(id){ const k='game.'+id+'.blurb'; const v=t(k); return v===k ? (ROOM.games.find(g=>g.id===id)||{}).blurb : v; }
 
 function renderLobby(){
   show('lobby');
@@ -219,13 +242,12 @@ function renderLobby(){
   ROOM.players.forEach(p=>{
     const li=document.createElement('li');
     li.innerHTML=`<span class="dot ${p.connected?'':'off'}"></span><span>${p.name}</span>`;
-    if(p.id===ROOM.hostId) li.insertAdjacentHTML('beforeend',`<span class="badge b-host">HOST</span>`);
-    if(p.id===YOU) li.insertAdjacentHTML('beforeend',`<span class="badge b-you">YOU</span>`);
+    if(p.id===ROOM.hostId) li.insertAdjacentHTML('beforeend',`<span class="badge b-host">${t('bHost')}</span>`);
+    if(p.id===YOU) li.insertAdjacentHTML('beforeend',`<span class="badge b-you">${t('bYou')}</span>`);
     ul.appendChild(li);
   });
 
   const host=isHost();
-  // game picker
   const picker=$('gamePicker'); picker.innerHTML='';
   ROOM.games.forEach(g=>{
     const sel = ROOM.gameType===g.id;
@@ -233,23 +255,21 @@ function renderLobby(){
     const div=document.createElement('div');
     div.className='game-card'+(sel?' sel':'');
     div.innerHTML=`<div class="emoji">${g.emoji}</div>
-      <div style="flex:1"><div class="gname">${g.name}</div>
-      <div class="gblurb">${g.blurb}</div>
-      <div class="gblurb" style="margin-top:3px;color:${fits?'var(--good)':'var(--bad)'}">${g.min}–${g.max} players</div></div>
+      <div style="flex:1"><div class="gname">${gameName(g.id)}</div>
+      <div class="gblurb">${gameBlurb(g.id)}</div>
+      <div class="gblurb" style="margin-top:3px;color:${fits?'var(--good)':'var(--bad)'}">${t('playerRange',{min:g.min,max:g.max})}</div></div>
       ${sel?'<div>✓</div>':''}`;
     if(host) div.onclick=()=>socket.emit('selectGame',g.id);
     else div.style.cursor='default';
     picker.appendChild(div);
   });
 
-  // settings
   const settingsCard=$('settingsCard'), box=$('settingsBox');
   if(ROOM.gameType && window.GAMES[ROOM.gameType] && window.GAMES[ROOM.gameType].renderSettings && host){
     settingsCard.style.display='block'; box.innerHTML='';
-    window.GAMES[ROOM.gameType].renderSettings(box, ROOM, patch=>socket.emit('updateSettings',patch));
+    window.GAMES[ROOM.gameType].renderSettings(box, ROOM, patch=>socket.emit('updateSettings',patch), window.HUB);
   } else settingsCard.style.display='none';
 
-  // start / wait
   const g = ROOM.games.find(x=>x.id===ROOM.gameType);
   const n = ROOM.players.length;
   const canStart = g && n>=g.min && n<=g.max;
@@ -257,18 +277,19 @@ function renderLobby(){
   $('waitHost').style.display = host?'none':'block';
   if(host){
     $('startBtn').disabled = !canStart;
-    $('startBtn').textContent = !ROOM.gameType ? 'Pick a game first'
-      : !canStart ? `Need ${g.min}–${g.max} players` : 'Start '+g.name;
+    $('startBtn').textContent = !ROOM.gameType ? t('pickFirst')
+      : !canStart ? t('needPlayers',{min:g.min,max:g.max}) : t('startX',{game:gameName(ROOM.gameType)});
   } else {
-    $('waitHost').textContent = ROOM.gameType ? `Host is setting up ${g?g.name:''}…` : 'Waiting for host to pick a game…';
+    $('waitHost').textContent = ROOM.gameType ? t('hostSettingUp',{game:gameName(ROOM.gameType)}) : t('waitingPick');
   }
 }
 
 /* ---- IN-GAME ---- */
 socket.on('gameState', state=>{
+  LAST_STATE = state;
   show('game');
   const mod = window.GAMES[state.game];
-  if(!mod){ $('gameRoot').innerHTML='<div class="card">Unknown game.</div>'; return; }
+  if(!mod){ $('gameRoot').innerHTML='<div class="card">'+t('unknownGame')+'</div>'; return; }
   mod.render($('gameRoot'), state, window.HUB);
 });
 </script>

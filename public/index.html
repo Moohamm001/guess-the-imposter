@@ -3,11 +3,11 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-<title>Guess the Imposter</title>
+<title>Party Games Hub</title>
 <style>
   :root{
     --bg:#0f1020; --bg2:#1a1b3a; --card:#21234a; --card2:#2b2d5e;
-    --accent:#ff5d8f; --accent2:#5d8bff; --good:#3ddc97; --bad:#ff5d5d;
+    --accent:#ff5d8f; --accent2:#5d8bff; --good:#3ddc97; --bad:#ff5d5d; --gold:#ffd35d;
     --text:#f5f6ff; --muted:#a7a9c9; --line:#34376e;
   }
   *{box-sizing:border-box; -webkit-tap-highlight-color:transparent;}
@@ -19,14 +19,13 @@
     align-items:center; padding:18px; overflow-x:hidden;
   }
   .app{width:100%; max-width:480px; flex:1; display:flex; flex-direction:column;}
-  h1{font-size:1.7rem; text-align:center; margin:.2em 0 .1em;
+  h1{font-size:1.6rem; text-align:center; margin:.2em 0 .1em;
      background:linear-gradient(90deg,var(--accent),var(--accent2));
      -webkit-background-clip:text; background-clip:text; color:transparent;}
   .tag{text-align:center; color:var(--muted); font-size:.85rem; margin-bottom:14px;}
   .card{background:var(--card); border:1px solid var(--line); border-radius:18px;
         padding:18px; margin-bottom:14px; box-shadow:0 10px 30px rgba(0,0,0,.35);}
-  .screen{display:none;}
-  .screen.active{display:block; animation:fade .25s ease;}
+  .screen{display:none;} .screen.active{display:block; animation:fade .25s ease;}
   @keyframes fade{from{opacity:0; transform:translateY(8px);} to{opacity:1; transform:none;}}
   label{display:block; font-size:.85rem; color:var(--muted); margin:12px 0 6px;}
   input,select{width:100%; padding:12px 14px; border-radius:12px; border:1px solid var(--line);
@@ -37,11 +36,13 @@
   button{font-family:inherit; cursor:pointer; border:none; border-radius:14px;
     padding:14px 16px; font-size:1rem; font-weight:600; color:#fff;
     transition:transform .08s ease, filter .15s ease; width:100%;}
-  button:active{transform:scale(.97);}
-  button:disabled{opacity:.45; cursor:not-allowed;}
+  button:active{transform:scale(.97);} button:disabled{opacity:.45; cursor:not-allowed;}
   .btn-primary{background:linear-gradient(90deg,var(--accent),#ff7da6);}
   .btn-secondary{background:var(--card2); border:1px solid var(--line);}
   .btn-blue{background:linear-gradient(90deg,var(--accent2),#7da6ff);}
+  .btn-good{background:linear-gradient(90deg,#2bbf85,var(--good)); color:#06281c;}
+  .btn-bad{background:linear-gradient(90deg,#e23b3b,var(--bad));}
+  .btn-gold{background:linear-gradient(90deg,#e6b800,var(--gold)); color:#3a2e00;}
   .btn-ghost{background:transparent; border:1px solid var(--line); color:var(--muted);}
   .stepper{display:flex; align-items:center; gap:10px;}
   .stepper button{width:48px; height:48px; font-size:1.4rem; padding:0; border-radius:12px;
@@ -54,10 +55,10 @@
   .code-show{font-size:2.6rem; font-weight:800; letter-spacing:8px;
     background:linear-gradient(90deg,var(--good),#9affd1);
     -webkit-background-clip:text; background-clip:text; color:transparent;}
-  .reveal-word{font-size:2.2rem; font-weight:800;
+  .reveal-word{font-size:2rem; font-weight:800;
     background:linear-gradient(90deg,var(--good),#9affd1);
     -webkit-background-clip:text; background-clip:text; color:transparent; margin:10px 0;}
-  .imposter-word{font-size:2.2rem; font-weight:800;
+  .imposter-word{font-size:2rem; font-weight:800;
     background:linear-gradient(90deg,var(--accent),#ff9bbb);
     -webkit-background-clip:text; background-clip:text; color:transparent; margin:10px 0;}
   .timer{font-size:3rem; font-weight:800; text-align:center; font-variant-numeric:tabular-nums;}
@@ -67,9 +68,9 @@
     border-radius:10px; margin-bottom:6px;}
   .dot{width:9px; height:9px; border-radius:50%; background:var(--good); flex:none;}
   .dot.off{background:var(--muted);}
-  .you-badge{margin-left:auto; font-size:.7rem; background:var(--accent2); padding:2px 8px; border-radius:999px;}
-  .host-badge{font-size:.7rem; background:var(--card2); padding:2px 8px; border-radius:999px; color:var(--muted);}
-  .voted{margin-left:auto; font-size:.7rem; color:var(--good);}
+  .badge{margin-left:auto; font-size:.7rem; padding:2px 8px; border-radius:999px;}
+  .b-you{background:var(--accent2);} .b-host{background:var(--card2); color:var(--muted);}
+  .b-leader{background:var(--gold); color:#3a2e00;} .b-team{background:var(--accent);}
   .order-list{counter-reset:o; padding:0; list-style:none; margin:8px 0 0;}
   .order-list li{counter-increment:o; padding:8px 12px; background:var(--bg); border-radius:10px;
     margin-bottom:6px; display:flex; align-items:center; gap:10px;}
@@ -78,19 +79,44 @@
   .footer{margin-top:auto; padding-top:12px; text-align:center;}
   .stack>*+*{margin-top:10px;}
   .toast{position:fixed; bottom:20px; left:50%; transform:translateX(-50%);
-    background:var(--bad); color:#fff; padding:10px 18px; border-radius:999px; font-size:.9rem;
-    opacity:0; transition:opacity .2s; pointer-events:none; z-index:99;}
+    background:var(--card2); border:1px solid var(--line); color:#fff; padding:10px 18px; border-radius:999px;
+    font-size:.9rem; opacity:0; transition:opacity .2s; pointer-events:none; z-index:99;}
   .toast.show{opacity:1;}
-  .vote-btn{text-align:left; display:flex; justify-content:space-between; align-items:center;}
-  .chip-list{display:flex; flex-wrap:wrap; gap:6px; justify-content:center; margin-top:8px;}
   .conn{position:fixed; top:8px; right:10px; font-size:.7rem; color:var(--muted);}
+  .game-card{display:flex; gap:12px; align-items:center; text-align:left; background:var(--bg);
+    border:2px solid var(--line); border-radius:14px; padding:12px; margin-bottom:8px; cursor:pointer; color:var(--text);}
+  .game-card.sel{border-color:var(--accent); background:var(--card2);}
+  .game-card .emoji{font-size:1.8rem;}
+  .game-card .gname{font-weight:700;}
+  .game-card .gblurb{font-size:.75rem; color:var(--muted);}
+  .selitem{display:flex; justify-content:space-between; align-items:center; padding:12px;
+    background:var(--bg); border:1px solid var(--line); border-radius:12px; margin-bottom:8px; text-align:left;}
+  .selitem.on{border-color:var(--accent2); background:var(--card2);}
+  .quest-track{display:flex; gap:6px; justify-content:center; margin:10px 0;}
+  .qnode{flex:1; max-width:60px; aspect-ratio:1; border-radius:12px; display:grid; place-items:center;
+    background:var(--bg); border:2px solid var(--line); font-weight:800; position:relative;}
+  .qnode.cur{border-color:var(--gold); box-shadow:0 0 0 2px rgba(255,211,93,.3);}
+  .qnode.pass{background:rgba(61,220,151,.2); border-color:var(--good); color:var(--good);}
+  .qnode.fail{background:rgba(255,93,93,.2); border-color:var(--bad); color:var(--bad);}
+  .qnode .sz{font-size:1.2rem;} .qnode .ff{position:absolute; bottom:2px; font-size:.6rem; color:var(--muted);}
+  .track-dots{display:flex; gap:6px; justify-content:center; margin-top:6px;}
+  .track-dots i{width:12px; height:12px; border-radius:50%; background:var(--line);}
+  .track-dots i.used{background:var(--bad);}
+  .chip-list{display:flex; flex-wrap:wrap; gap:6px; justify-content:center; margin-top:8px;}
+  .log{font-size:.78rem; color:var(--muted); max-height:130px; overflow-y:auto;}
+  .log div{padding:3px 0; border-bottom:1px solid rgba(255,255,255,.05);}
+  .vote-grid{display:flex; flex-wrap:wrap; gap:6px; justify-content:center;}
+  .vote-grid .vp{padding:6px 10px; border-radius:10px; font-size:.8rem; background:var(--bg); border:1px solid var(--line);}
+  .vote-grid .vp.app{border-color:var(--good); color:var(--good);}
+  .vote-grid .vp.rej{border-color:var(--bad); color:var(--bad);}
+  .selectable{cursor:pointer;}
 </style>
 </head>
 <body>
 <div class="conn" id="conn">connecting…</div>
 <div class="app">
-  <h1>🕵️ Guess the Imposter</h1>
-  <div class="tag" id="subtag">Online multiplayer · play on your own phone</div>
+  <h1 id="title">🎉 Party Games Hub</h1>
+  <div class="tag" id="subtag">Play together on your own phones</div>
 
   <!-- HOME -->
   <section id="home" class="screen active">
@@ -101,7 +127,7 @@
     <div class="stack">
       <button class="btn-primary" id="createBtn">➕ Create a Room</button>
       <div class="center muted small">— or join one —</div>
-      <input id="codeInput" type="text" placeholder="CODE" maxlength="4" autocomplete="off" inputmode="text">
+      <input id="codeInput" type="text" placeholder="CODE" maxlength="4" autocomplete="off">
       <button class="btn-blue" id="joinBtn">Join Room →</button>
     </div>
     <div class="footer muted small">One person creates a room and shares the code. Everyone else joins from their own phone.</div>
@@ -118,149 +144,71 @@
       <div class="small muted" style="margin-bottom:6px">Players (<span id="playerCount">0</span>)</div>
       <ul class="plist" id="lobbyPlayers"></ul>
     </div>
-
-    <div class="card" id="hostSettings" style="display:none">
-      <div class="small muted center" style="margin-bottom:6px">Host settings</div>
-      <label>Imposters</label>
-      <div class="stepper">
-        <button id="iMinus">−</button>
-        <div class="val" id="iCount">1</div>
-        <button id="iPlus">+</button>
-      </div>
-      <label>Category</label>
-      <select id="catSel"></select>
-      <label>Discussion timer</label>
-      <select id="timerSel">
-        <option value="0">No timer</option>
-        <option value="60">1 minute</option>
-        <option value="120">2 minutes</option>
-        <option value="180">3 minutes</option>
-        <option value="300">5 minutes</option>
-      </select>
-      <label style="display:flex;align-items:center;gap:8px;cursor:pointer;margin-top:14px">
-        <input type="checkbox" id="hintToggle" style="width:auto">
-        <span>Give imposter a category hint</span>
-      </label>
+    <div class="card">
+      <div class="small muted center" style="margin-bottom:8px">Choose a game</div>
+      <div id="gamePicker"></div>
     </div>
-
+    <div class="card" id="settingsCard" style="display:none">
+      <div class="small muted center" style="margin-bottom:6px">Game settings (host)</div>
+      <div id="settingsBox"></div>
+    </div>
     <button class="btn-primary" id="startBtn" style="display:none">Start Game</button>
-    <div class="center muted small" id="waitHost" style="display:none">Waiting for the host to start…</div>
+    <div class="center muted small" id="waitHost" style="display:none">Waiting for the host…</div>
   </section>
 
-  <!-- ROLE -->
-  <section id="rolescr" class="screen">
-    <div class="card center">
-      <div id="coverState" class="stack">
-        <div class="muted">Your secret role is ready.</div>
-        <div class="muted small">Don’t let anyone see your screen 👀</div>
-        <button class="btn-blue" id="tapReveal">👁️ Tap to reveal my role</button>
-      </div>
-      <div id="roleState" style="display:none">
-        <div id="roleBox"></div>
-        <button class="btn-secondary" id="hideRole" style="margin-top:16px">Hide</button>
-      </div>
-    </div>
-    <div class="card">
-      <div class="center muted small">Clue-giving order</div>
-      <ol class="order-list" id="orderList"></ol>
-    </div>
-    <div class="card center" id="timerCard">
-      <div class="muted small">Discussion time</div>
-      <div class="timer" id="timer">--:--</div>
-      <button class="btn-secondary" id="pauseBtn" style="margin-top:8px; display:none">Pause</button>
-    </div>
-    <button class="btn-primary" id="goVote" style="display:none">Start Voting</button>
-    <div class="center muted small" id="voteWait" style="display:none">Give your clue out loud. Host starts voting when everyone’s done.</div>
-  </section>
-
-  <!-- VOTE -->
-  <section id="votescr" class="screen">
-    <div class="card">
-      <div class="center"><strong>Who is the imposter?</strong></div>
-      <div class="center muted small" id="voteStatus" style="margin:6px 0 12px">Tap your vote.</div>
-      <div class="stack" id="voteList"></div>
-    </div>
-    <button class="btn-ghost" id="forceReveal" style="display:none">Reveal now (host)</button>
-  </section>
-
-  <!-- RESULT -->
-  <section id="resultscr" class="screen">
-    <div class="card center"><div id="resultBody"></div></div>
-    <button class="btn-primary" id="againBtn" style="display:none">Play Again</button>
-    <div class="center muted small" id="againWait" style="display:none">Waiting for host to start a new round…</div>
-  </section>
+  <!-- GAME (rendered by modules) -->
+  <section id="game" class="screen"><div id="gameRoot"></div></section>
 </div>
 <div class="toast" id="toast"></div>
 
 <script src="/socket.io/socket.io.js"></script>
+<script src="/games/imposter.js"></script>
+<script src="/games/avalon.js"></script>
 <script>
 const $ = id => document.getElementById(id);
 const socket = io();
-let YOU = null, ROOM = null, MYROLE = null;
+window.GAMES = window.GAMES || {};
+let YOU = null, ROOM = null;
 
 const show = id => { document.querySelectorAll('.screen').forEach(s=>s.classList.remove('active')); $(id).classList.add('active'); };
-function toast(msg){ const t=$('toast'); t.textContent=msg; t.classList.add('show'); setTimeout(()=>t.classList.remove('show'),2500); }
-const fmt = s => Math.floor(s/60)+':'+String(s%60).padStart(2,'0');
+function toast(m){ const t=$('toast'); t.textContent=m; t.classList.add('show'); setTimeout(()=>t.classList.remove('show'),2500); }
 const isHost = () => ROOM && ROOM.hostId === YOU;
+const emitAction = (type, payload={}) => socket.emit('gameAction', { type, ...payload });
+window.HUB = { toast, emitAction, get you(){return YOU;}, get isHost(){return isHost();}, socket };
 
-socket.on('connect', ()=>{ $('conn').textContent='online'; });
-socket.on('disconnect', ()=>{ $('conn').textContent='reconnecting…'; });
+socket.on('connect', ()=>$('conn').textContent='online');
+socket.on('disconnect', ()=>$('conn').textContent='reconnecting…');
 socket.on('errorMsg', m=>toast(m));
 
 /* ---- HOME ---- */
-// prefill code from ?room=
 const params = new URLSearchParams(location.search);
 if(params.get('room')) $('codeInput').value = params.get('room').toUpperCase().slice(0,4);
-try{ const n=localStorage.getItem('imp_name'); if(n) $('nameInput').value=n; }catch(e){}
-
-function myName(){ const n=$('nameInput').value.trim(); try{localStorage.setItem('imp_name',n);}catch(e){} return n; }
+try{ const n=localStorage.getItem('hub_name'); if(n) $('nameInput').value=n; }catch(e){}
+function myName(){ const n=$('nameInput').value.trim(); try{localStorage.setItem('hub_name',n);}catch(e){} return n; }
 
 $('createBtn').onclick=()=>{
   if(!myName()) return toast('Enter your name first');
-  socket.emit('createRoom', {name:myName()}, res=>{
-    if(res&&res.ok){ YOU=res.youId; }
-  });
+  socket.emit('createRoom',{name:myName()}, r=>{ if(r&&r.ok) YOU=r.youId; });
 };
 $('joinBtn').onclick=()=>{
   if(!myName()) return toast('Enter your name first');
   const code=$('codeInput').value.trim().toUpperCase();
   if(code.length<4) return toast('Enter the 4-letter code');
-  socket.emit('joinRoom', {code, name:myName()}, res=>{
-    if(res&&res.ok){ YOU=res.youId; }
-    else toast(res&&res.error||'Could not join');
-  });
+  socket.emit('joinRoom',{code,name:myName()}, r=>{ if(r&&r.ok) YOU=r.youId; else toast(r&&r.error||'Could not join'); });
 };
-
-/* ---- LOBBY settings (host) ---- */
-let catFilled=false;
-function fillCats(cats){
-  if(catFilled) return; catFilled=true;
-  cats.forEach(c=>{ const o=document.createElement('option'); o.value=c; o.textContent=c; $('catSel').appendChild(o); });
-}
-$('iMinus').onclick=()=>emitSettings({imposters:(ROOM.settings.imposters-1)});
-$('iPlus').onclick =()=>emitSettings({imposters:(ROOM.settings.imposters+1)});
-$('catSel').onchange=e=>emitSettings({category:e.target.value});
-$('timerSel').onchange=e=>emitSettings({timer:+e.target.value});
-$('hintToggle').onchange=e=>emitSettings({hint:e.target.checked});
-function emitSettings(patch){ socket.emit('updateSettings', patch); }
-$('startBtn').onclick=()=>socket.emit('startGame');
 $('copyLink').onclick=()=>{
   const url=location.origin+'/?room='+ROOM.code;
-  const done=()=>toast('Invite link copied!');
-  if(navigator.clipboard) navigator.clipboard.writeText(url).then(done).catch(()=>prompt('Copy this link:',url));
+  if(navigator.clipboard) navigator.clipboard.writeText(url).then(()=>toast('Invite link copied!')).catch(()=>prompt('Copy:',url));
   else prompt('Copy this link:',url);
 };
+$('startBtn').onclick=()=>socket.emit('startGame');
 
-/* ---- ROOM STATE ---- */
+/* ---- ROOM / LOBBY ---- */
 socket.on('room', room=>{
   ROOM = room;
-  if(!YOU){ return; } // not in a room yet
-  fillCats(room.categories);
-
+  if(!YOU) return;
   if(room.state==='lobby') renderLobby();
-  else if(room.state==='play') renderPlay();
-  else if(room.state==='vote') renderVote();
-  else if(room.state==='result'){ /* result event handles body */ renderResultControls(); }
+  // when ingame, the 'gameState' event drives the UI
 });
 
 function renderLobby(){
@@ -271,128 +219,58 @@ function renderLobby(){
   ROOM.players.forEach(p=>{
     const li=document.createElement('li');
     li.innerHTML=`<span class="dot ${p.connected?'':'off'}"></span><span>${p.name}</span>`;
-    if(p.id===ROOM.hostId){ const b=document.createElement('span'); b.className='host-badge'; b.textContent='HOST'; li.appendChild(b); }
-    if(p.id===YOU){ const b=document.createElement('span'); b.className='you-badge'; b.textContent='YOU'; li.appendChild(b); }
+    if(p.id===ROOM.hostId) li.insertAdjacentHTML('beforeend',`<span class="badge b-host">HOST</span>`);
+    if(p.id===YOU) li.insertAdjacentHTML('beforeend',`<span class="badge b-you">YOU</span>`);
     ul.appendChild(li);
   });
-  // host vs guest
+
   const host=isHost();
-  $('hostSettings').style.display = host?'block':'none';
+  // game picker
+  const picker=$('gamePicker'); picker.innerHTML='';
+  ROOM.games.forEach(g=>{
+    const sel = ROOM.gameType===g.id;
+    const fits = ROOM.players.length>=g.min && ROOM.players.length<=g.max;
+    const div=document.createElement('div');
+    div.className='game-card'+(sel?' sel':'');
+    div.innerHTML=`<div class="emoji">${g.emoji}</div>
+      <div style="flex:1"><div class="gname">${g.name}</div>
+      <div class="gblurb">${g.blurb}</div>
+      <div class="gblurb" style="margin-top:3px;color:${fits?'var(--good)':'var(--bad)'}">${g.min}–${g.max} players</div></div>
+      ${sel?'<div>✓</div>':''}`;
+    if(host) div.onclick=()=>socket.emit('selectGame',g.id);
+    else div.style.cursor='default';
+    picker.appendChild(div);
+  });
+
+  // settings
+  const settingsCard=$('settingsCard'), box=$('settingsBox');
+  if(ROOM.gameType && window.GAMES[ROOM.gameType] && window.GAMES[ROOM.gameType].renderSettings && host){
+    settingsCard.style.display='block'; box.innerHTML='';
+    window.GAMES[ROOM.gameType].renderSettings(box, ROOM, patch=>socket.emit('updateSettings',patch));
+  } else settingsCard.style.display='none';
+
+  // start / wait
+  const g = ROOM.games.find(x=>x.id===ROOM.gameType);
+  const n = ROOM.players.length;
+  const canStart = g && n>=g.min && n<=g.max;
   $('startBtn').style.display = host?'block':'none';
   $('waitHost').style.display = host?'none':'block';
   if(host){
-    $('iCount').textContent = ROOM.settings.imposters;
-    $('catSel').value = ROOM.settings.category;
-    $('timerSel').value = String(ROOM.settings.timer);
-    $('hintToggle').checked = ROOM.settings.hint;
-    $('startBtn').disabled = ROOM.players.length<3;
-    $('startBtn').textContent = ROOM.players.length<3 ? 'Need 3+ players' : 'Start Game';
-  }
-}
-
-/* ---- ROLE / PLAY ---- */
-socket.on('yourRole', data=>{
-  MYROLE = data;
-  // reset cover
-  $('coverState').style.display='block';
-  $('roleState').style.display='none';
-});
-$('tapReveal').onclick=()=>{
-  if(!MYROLE) return;
-  const box=$('roleBox');
-  if(MYROLE.role==='imposter'){
-    box.innerHTML=`<div class="muted small">Your role</div>
-      <div class="imposter-word">🤫 IMPOSTER</div>
-      <div class="muted">Blend in. Work out the word from others’ clues — guess it aloud to win instantly!</div>
-      ${MYROLE.hint?`<div class="pill" style="margin-top:10px">Hint — Category: ${MYROLE.category}</div>`:''}`;
+    $('startBtn').disabled = !canStart;
+    $('startBtn').textContent = !ROOM.gameType ? 'Pick a game first'
+      : !canStart ? `Need ${g.min}–${g.max} players` : 'Start '+g.name;
   } else {
-    box.innerHTML=`<div class="muted small">The secret word is</div>
-      <div class="reveal-word">${MYROLE.word}</div>
-      <div class="pill">Category: ${MYROLE.category}</div>
-      <div class="muted" style="margin-top:8px">Prove you know it — but don’t make it obvious.</div>`;
+    $('waitHost').textContent = ROOM.gameType ? `Host is setting up ${g?g.name:''}…` : 'Waiting for host to pick a game…';
   }
-  $('coverState').style.display='none';
-  $('roleState').style.display='block';
-};
-$('hideRole').onclick=()=>{ $('coverState').style.display='block'; $('roleState').style.display='none'; };
-
-function renderPlay(){
-  show('rolescr');
-  // order
-  const ol=$('orderList'); ol.innerHTML='';
-  (MYROLE?MYROLE.order:[]).forEach(n=>{ const li=document.createElement('li'); li.textContent=n; ol.appendChild(li); });
-  // controls
-  const host=isHost();
-  $('goVote').style.display = host?'block':'none';
-  $('voteWait').style.display = host?'none':'block';
-  $('pauseBtn').style.display = (host && ROOM.settings.timer>0)?'block':'none';
-  $('timerCard').style.display = ROOM.settings.timer>0?'block':'none';
 }
-$('goVote').onclick=()=>socket.emit('beginVote');
-$('pauseBtn').onclick=()=>socket.emit('toggleTimer');
 
-socket.on('timer', t=>{
-  const el=$('timer');
-  if(t.remaining<=0 && !t.running){ el.textContent="Time!"; el.classList.add('warn'); }
-  else { el.textContent=fmt(t.remaining); el.classList.toggle('warn', t.remaining<=10); }
-  $('pauseBtn').textContent = t.running?'Pause':'Resume';
+/* ---- IN-GAME ---- */
+socket.on('gameState', state=>{
+  show('game');
+  const mod = window.GAMES[state.game];
+  if(!mod){ $('gameRoot').innerHTML='<div class="card">Unknown game.</div>'; return; }
+  mod.render($('gameRoot'), state, window.HUB);
 });
-
-/* ---- VOTE ---- */
-function renderVote(){
-  show('votescr');
-  const myVote = null; // server tracks; we just allow re-tap
-  const votedCount = ROOM.players.filter(p=>p.hasVoted).length;
-  $('voteStatus').textContent = `${votedCount}/${ROOM.players.filter(p=>p.connected).length} voted`;
-  const wrap=$('voteList'); wrap.innerHTML='';
-  ROOM.players.forEach(p=>{
-    const b=document.createElement('button');
-    b.className='btn-secondary vote-btn';
-    b.innerHTML=`<span>${p.name}${p.id===YOU?' (you)':''}</span>`+
-      (p.hasVoted?`<span class="voted">✓ voted</span>`:`<span class="small muted">tap to vote</span>`);
-    b.onclick=()=>{ socket.emit('castVote',{targetId:p.id}); toast('Vote cast for '+p.name); };
-    wrap.appendChild(b);
-  });
-  $('forceReveal').style.display = isHost()?'block':'none';
-}
-$('forceReveal').onclick=()=>socket.emit('forceReveal');
-
-/* ---- RESULT ---- */
-socket.on('result', r=>{
-  const nameOf = id => (r.players.find(p=>p.id===id)||{}).name || '—';
-  const imposterNames = r.imposterIds.map(nameOf);
-  let headline, color, sub;
-  if(r.tie || !r.accusedId){
-    headline='🤝 No majority'; color='var(--muted)';
-    sub='The vote was tied — no one was ejected, so the imposter survives.';
-  } else if(r.caught){
-    headline='✅ Civilians win!'; color='var(--good)';
-    sub=`You caught <strong>${nameOf(r.accusedId)}</strong>.`;
-  } else {
-    headline='🤫 Imposter wins!'; color='var(--accent)';
-    sub=`<strong>${nameOf(r.accusedId)}</strong> was innocent.`;
-  }
-  const rolesList = r.players.map(p=>{
-    const imp = p.role==='imposter';
-    return `<div class="pill" style="${imp?'background:rgba(255,93,143,.2);color:#ffb3cd':''}">${p.name}${imp?' — 🕵️':''}</div>`;
-  }).join('');
-  $('resultBody').innerHTML=`
-    <div class="big" style="color:${color}">${headline}</div>
-    <div class="muted" style="margin-bottom:10px">${sub}</div>
-    <div class="muted small">The secret word was</div>
-    <div class="reveal-word">${r.word}</div>
-    <div class="pill">Category: ${r.category}</div>
-    <div class="muted small" style="margin-top:16px">${imposterNames.length>1?'Imposters':'Imposter'}: <strong>${imposterNames.join(', ')}</strong></div>
-    <div class="chip-list">${rolesList}</div>`;
-  show('resultscr');
-  renderResultControls();
-});
-function renderResultControls(){
-  show('resultscr');
-  $('againBtn').style.display = isHost()?'block':'none';
-  $('againWait').style.display = isHost()?'none':'block';
-}
-$('againBtn').onclick=()=>socket.emit('playAgain');
 </script>
 </body>
 </html>

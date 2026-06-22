@@ -1,10 +1,28 @@
-# 🕵️ Guess the Imposter — Online Multiplayer
+# 🎉 Party Games Hub — Online Multiplayer
 
 **▶️ Play now: https://guess-the-imposter-u50c.onrender.com/**
 
 Everyone plays on their **own phone** from anywhere. One person creates a room and shares
-the 4-letter code (or an invite link); everyone else joins. Roles are dealt privately to each
-phone, there's a synced discussion timer, and everyone votes from their device.
+the 4-letter code (or an invite link); everyone else joins, the host picks a game, and roles/state
+are dealt privately to each phone.
+
+## Games included
+- **🕵️ Guess the Imposter** (3–10 players) — everyone shares a secret word except the imposter(s),
+  who must bluff. Synced discussion timer, then everyone votes.
+- **⚔️ The Resistance: Avalon** (5–10 players) — hidden roles & social deduction. Good completes 3
+  quests; Evil sabotages 3 quests, busts 5 team votes, or assassinates Merlin. Supports optional
+  roles: Percival, Morgana, Mordred, Oberon (Merlin & Assassin always in play).
+
+## Architecture (hub)
+A shared room/lobby system with **pluggable game modules** so new games are easy to add:
+```
+server.js            shared: rooms, join/leave, host, lobby, game registry & dispatch
+games/<id>.js        server-side rules for one game (deal, per-player state, actions)
+public/index.html    shell: home, lobby, game picker, settings, in-game container
+public/games/<id>.js client UI for one game (renderSettings + render from server state)
+```
+To add a game: drop a `games/<id>.js` module + a `public/games/<id>.js` renderer and register
+the module in `server.js`. The lobby auto-lists it.
 
 ## Play locally (same WiFi)
 ```bash
@@ -38,15 +56,21 @@ on the same WiFi.
 Any host that runs a Node web service works. Just run `npm install` then `npm start`;
 the app listens on `process.env.PORT`.
 
-## How to play
-- **3–12 players.** Civilians all see the same secret word; the imposter(s) see only "IMPOSTER".
+## How to play — Guess the Imposter
+- Civilians all see the same secret word; the imposter(s) see only "IMPOSTER".
 - Take turns saying one clue out loud that proves you know the word — without giving it away.
 - The imposter bluffs using others' clues. If an imposter says the secret word aloud, they win.
 - Host taps **Start Voting**; everyone votes on their phone.
 - Civilians win if the most-voted player is an imposter; otherwise the imposter wins.
+- Host settings: number of imposters, word category, discussion timer, optional category hint.
 
-## Settings (host, in the lobby)
-- Number of imposters (auto-capped to keep civilians the majority)
-- Word category (or "Random Mix")
-- Discussion timer length
-- Optional category hint for the imposter
+## How to play — The Resistance: Avalon
+1. **Night:** each phone privately shows your role and what you know (Merlin sees Evil; Evil see each
+   other; Percival sees Merlin/Morgana). Everyone taps "ready".
+2. **Team building:** the Leader picks a quest team; everyone votes Approve/Reject. Majority sends
+   the team; 5 rejected proposals in a round = Evil wins. Leader passes clockwise on rejection.
+3. **Quest:** team members secretly play Success/Fail (Good must play Success). One Fail fails the
+   quest (Quest 4 needs 2 Fails with 7+ players).
+4. **Win:** Good completing 3 quests triggers the **Assassination** — the Assassin names who they
+   think Merlin is. Right = Evil steals the win; wrong = Good wins. Evil also wins by failing 3 quests.
+- Host settings: toggle Percival, Morgana, Mordred, Oberon (Merlin & Assassin always included).

@@ -45,6 +45,7 @@ const mod = room => room.gameType ? GAMES[room.gameType] : null;
 /* ---------------- SOCKETS ---------------- */
 io.on("connection", (socket) => {
   let joinedCode = null;
+  socket.emit("games", gameMetas());   // let the landing page show what's available
   const R = () => rooms.get(joinedCode);
   const isHost = r => r && r.hostId === socket.id;
 

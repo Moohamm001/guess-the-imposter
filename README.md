@@ -13,6 +13,12 @@ are dealt privately to each phone.
   quests; Evil sabotages 3 quests, busts 5 team votes, or assassinates Merlin. Supports optional
   roles: Percival, Morgana, Mordred, Oberon (Merlin & Assassin always in play).
 
+## Discoverability / sharing
+- **Landing page** lists the available games + count (sent on socket connect via the `games` event).
+- **Social link previews**: Open Graph + Twitter Card meta tags in `index.html` with a 1200×630
+  `public/og.png` (regenerate from `og.svg`: `node -e "require('sharp')('og.svg').png().resize(1200,630).toFile('public/og.png')"`).
+- **SEO**: `public/robots.txt` + `public/sitemap.xml`, canonical URL, description/keywords, emoji favicon.
+
 ## Languages
 English & **Thai** (ไทย) — tap the language button (top-left). Choice is saved per device.
 UI strings live in `public/i18n.js`; the Avalon server sends structured enums (roles, knowledge,

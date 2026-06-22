@@ -3,7 +3,25 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-<title>Party Games Hub</title>
+<title>Party Games Hub — Play Imposter & Avalon with friends online</title>
+<meta name="description" content="Free online party games you play on your own phones — Guess the Imposter and The Resistance: Avalon. Create a room, share the code, play with 3–10 friends. English & Thai.">
+<meta name="theme-color" content="#0f1020">
+<meta name="keywords" content="party games, imposter, spyfall, avalon, resistance, online, multiplayer, social deduction, เกมปาร์ตี้, จับผู้แอบแฝง">
+<link rel="canonical" href="https://guess-the-imposter-u50c.onrender.com/">
+<!-- Social link preview (Open Graph + Twitter) -->
+<meta property="og:type" content="website">
+<meta property="og:site_name" content="Party Games Hub">
+<meta property="og:title" content="🎉 Party Games Hub — Imposter & Avalon">
+<meta property="og:description" content="Free online party games on your own phones. Create a room, share the code, play with friends. English & Thai.">
+<meta property="og:url" content="https://guess-the-imposter-u50c.onrender.com/">
+<meta property="og:image" content="https://guess-the-imposter-u50c.onrender.com/og.png">
+<meta property="og:image:width" content="1200">
+<meta property="og:image:height" content="630">
+<meta name="twitter:card" content="summary_large_image">
+<meta name="twitter:title" content="🎉 Party Games Hub — Imposter & Avalon">
+<meta name="twitter:description" content="Free online party games on your own phones. Create a room, share the code, play with friends.">
+<meta name="twitter:image" content="https://guess-the-imposter-u50c.onrender.com/og.png">
+<link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'%3E%3Ctext y='.9em' font-size='90'%3E🎉%3C/text%3E%3C/svg%3E">
 <style>
   :root{
     --bg:#0f1020; --bg2:#1a1b3a; --card:#21234a; --card2:#2b2d5e;
@@ -124,6 +142,10 @@
   <!-- HOME -->
   <section id="home" class="screen active">
     <div class="card">
+      <div class="small muted center" id="gamesCount" style="margin-bottom:10px">🎮</div>
+      <div id="homeGames"></div>
+    </div>
+    <div class="card">
       <label data-i18n="yourName">Your name</label>
       <input id="nameInput" type="text" data-i18n-ph="namePh" maxlength="16" autocomplete="off">
     </div>
@@ -173,7 +195,7 @@ const $ = id => document.getElementById(id);
 const socket = io();
 const t = (k, v) => window.I18N.t(k, v);
 window.GAMES = window.GAMES || {};
-let YOU = null, ROOM = null, LAST_STATE = null;
+let YOU = null, ROOM = null, LAST_STATE = null, HUB_GAMES = [];
 
 const show = id => { document.querySelectorAll('.screen').forEach(s=>s.classList.remove('active')); $(id).classList.add('active'); };
 function toast(m){ const el=$('toast'); el.textContent=m; el.classList.add('show'); setTimeout(()=>el.classList.remove('show'),2500); }
@@ -191,11 +213,30 @@ function applyStatic(){
 $('langBtn').onclick = ()=> window.I18N.setLang(window.I18N.getLang()==='en'?'th':'en');
 document.addEventListener('langchange', ()=>{
   applyStatic();
+  renderHomeGames();
   if(ROOM && ROOM.state==='lobby') renderLobby();
   if($('game').classList.contains('active') && LAST_STATE && window.GAMES[LAST_STATE.game])
     window.GAMES[LAST_STATE.game].render($('gameRoot'), LAST_STATE, window.HUB);
 });
 applyStatic();
+
+/* ---- landing games showcase ---- */
+socket.on('games', list=>{ HUB_GAMES = list; renderHomeGames(); });
+function gName(g){ const k='game.'+g.id+'.name'; const v=t(k); return v===k? g.name : v; }
+function gBlurb(g){ const k='game.'+g.id+'.blurb'; const v=t(k); return v===k? g.blurb : v; }
+function renderHomeGames(){
+  if(!HUB_GAMES.length) return;
+  $('gamesCount').textContent = '🎮 ' + t(HUB_GAMES.length===1?'gamesAvailable1':'gamesAvailable',{n:HUB_GAMES.length});
+  $('homeGames').innerHTML = HUB_GAMES.map(g=>`
+    <div class="game-card" style="cursor:default">
+      <div class="emoji">${g.emoji}</div>
+      <div style="flex:1">
+        <div class="gname">${gName(g)}</div>
+        <div class="gblurb">${gBlurb(g)}</div>
+        <div class="gblurb" style="margin-top:3px">${t('playerRange',{min:g.min,max:g.max})}</div>
+      </div>
+    </div>`).join('');
+}
 
 socket.on('connect', ()=>$('conn').textContent='online');
 socket.on('disconnect', ()=>$('conn').textContent='reconnecting…');

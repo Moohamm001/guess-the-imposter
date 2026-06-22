@@ -1,0 +1,40 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1200" height="630" viewBox="0 0 1200 630">
+  <defs>
+    <radialGradient id="bg" cx="50%" cy="-10%" r="120%">
+      <stop offset="0%" stop-color="#1a1b3a"/>
+      <stop offset="100%" stop-color="#0f1020"/>
+    </radialGradient>
+    <linearGradient id="title" x1="0" y1="0" x2="1" y2="0">
+      <stop offset="0%" stop-color="#ff5d8f"/>
+      <stop offset="100%" stop-color="#5d8bff"/>
+    </linearGradient>
+    <linearGradient id="g1" x1="0" y1="0" x2="1" y2="1">
+      <stop offset="0%" stop-color="#ff5d8f"/><stop offset="100%" stop-color="#ff7da6"/>
+    </linearGradient>
+    <linearGradient id="g2" x1="0" y1="0" x2="1" y2="1">
+      <stop offset="0%" stop-color="#5d8bff"/><stop offset="100%" stop-color="#7da6ff"/>
+    </linearGradient>
+  </defs>
+  <rect width="1200" height="630" fill="url(#bg)"/>
+  <text x="600" y="150" text-anchor="middle" font-family="Segoe UI, Arial, sans-serif" font-size="92" font-weight="800" fill="url(#title)">🎉 Party Games Hub</text>
+  <text x="600" y="215" text-anchor="middle" font-family="Segoe UI, Arial, sans-serif" font-size="36" fill="#a7a9c9">Play together on your own phones · English &amp; ไทย</text>
+
+  <g>
+    <rect x="150" y="285" width="420" height="230" rx="28" fill="#21234a" stroke="#34376e" stroke-width="2"/>
+    <text x="190" y="380" font-family="Segoe UI, Arial, sans-serif" font-size="80">🕵️</text>
+    <text x="300" y="375" font-family="Segoe UI, Arial, sans-serif" font-size="40" font-weight="700" fill="#f5f6ff">Guess the</text>
+    <text x="300" y="420" font-family="Segoe UI, Arial, sans-serif" font-size="40" font-weight="700" fill="#f5f6ff">Imposter</text>
+    <rect x="190" y="455" width="180" height="40" rx="20" fill="url(#g1)"/>
+    <text x="280" y="482" text-anchor="middle" font-family="Segoe UI, Arial, sans-serif" font-size="24" font-weight="700" fill="#fff">3–10 players</text>
+  </g>
+  <g>
+    <rect x="630" y="285" width="420" height="230" rx="28" fill="#21234a" stroke="#34376e" stroke-width="2"/>
+    <text x="670" y="380" font-family="Segoe UI, Arial, sans-serif" font-size="80">⚔️</text>
+    <text x="780" y="375" font-family="Segoe UI, Arial, sans-serif" font-size="40" font-weight="700" fill="#f5f6ff">The Resistance</text>
+    <text x="780" y="420" font-family="Segoe UI, Arial, sans-serif" font-size="40" font-weight="700" fill="#f5f6ff">Avalon</text>
+    <rect x="670" y="455" width="180" height="40" rx="20" fill="url(#g2)"/>
+    <text x="760" y="482" text-anchor="middle" font-family="Segoe UI, Arial, sans-serif" font-size="24" font-weight="700" fill="#fff">5–10 players</text>
+  </g>
+
+  <text x="600" y="580" text-anchor="middle" font-family="Segoe UI, Arial, sans-serif" font-size="30" fill="#3ddc97">Create a room · Share the code · Play free</text>
+</svg>

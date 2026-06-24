@@ -131,9 +131,8 @@ io.on("connection", (socket) => {
     broadcast(room);
   });
 
-  socket.on("disconnect", () => {
-    const room = R();
-    if (!room) return;
+  // Shared by disconnect (tab closed) and leaveRoom (left on purpose).
+  function departRoom(room) {
     const p = room.players.find(x => x.id === socket.id);
     if (p) p.connected = false;
     if (room.state === "lobby") room.players = room.players.filter(x => x.id !== socket.id);
@@ -152,6 +151,20 @@ io.on("connection", (socket) => {
     if (mod(room) && mod(room).normalizeSettings && room.state === "lobby") mod(room).normalizeSettings(room);
     broadcast(room);
     if (room.state === "ingame" && mod(room)) mod(room).sync(room, io);
+  }
+
+  socket.on("leaveRoom", () => {
+    const room = R();
+    if (!room) return;
+    socket.leave(room.code);
+    joinedCode = null;
+    departRoom(room);
+  });
+
+  socket.on("disconnect", () => {
+    const room = R();
+    if (!room) return;
+    departRoom(room);
   });
 });
 

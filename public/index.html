@@ -103,6 +103,8 @@
   .conn{position:fixed; top:8px; right:10px; font-size:.7rem; color:var(--muted);}
   .langbtn{position:fixed; top:6px; left:10px; z-index:50; width:auto; padding:6px 12px; font-size:.8rem;
     background:var(--card2); border:1px solid var(--line); color:var(--text); border-radius:999px;}
+  .leavebtn{position:fixed; top:6px; left:78px; z-index:50; width:auto; padding:6px 12px; font-size:.8rem;
+    background:var(--card2); border:1px solid var(--line); color:var(--text); border-radius:999px; display:none;}
   .game-card{display:flex; gap:12px; align-items:center; text-align:left; background:var(--bg);
     border:2px solid var(--line); border-radius:14px; padding:12px; margin-bottom:8px; cursor:pointer; color:var(--text);}
   .game-card.sel{border-color:var(--accent); background:var(--card2);}
@@ -134,6 +136,7 @@
 </head>
 <body>
 <button class="langbtn" id="langBtn">ไทย</button>
+<button class="leavebtn" id="leaveBtn" data-i18n="leaveRoom">🚪 Leave</button>
 <div class="conn" id="conn">connecting…</div>
 <div class="app">
   <h1 id="title" data-i18n="title">🎉 Party Games Hub</h1>
@@ -197,7 +200,11 @@ const t = (k, v) => window.I18N.t(k, v);
 window.GAMES = window.GAMES || {};
 let YOU = null, ROOM = null, LAST_STATE = null, HUB_GAMES = [];
 
-const show = id => { document.querySelectorAll('.screen').forEach(s=>s.classList.remove('active')); $(id).classList.add('active'); };
+const show = id => {
+  document.querySelectorAll('.screen').forEach(s=>s.classList.remove('active'));
+  $(id).classList.add('active');
+  $('leaveBtn').style.display = id==='home' ? 'none' : 'block';   // nav: leave only shows inside a room
+};
 function toast(m){ const el=$('toast'); el.textContent=m; el.classList.add('show'); setTimeout(()=>el.classList.remove('show'),2500); }
 const isHost = () => ROOM && ROOM.hostId === YOU;
 const emitAction = (type, payload={}) => socket.emit('gameAction', { type, ...payload });
@@ -264,6 +271,19 @@ $('copyLink').onclick=()=>{
   else prompt('Copy this link:',url);
 };
 $('startBtn').onclick=()=>socket.emit('startGame');
+
+/* ---- NAV: leave room → home (no page refresh) ---- */
+function goHome(){
+  YOU=null; ROOM=null; LAST_STATE=null;
+  $('gameRoot').innerHTML='';
+  $('codeInput').value='';
+  show('home');
+}
+$('leaveBtn').onclick=()=>{
+  if(ROOM && ROOM.state==='ingame' && !confirm(t('confirmLeave'))) return;
+  socket.emit('leaveRoom');
+  goHome();
+};
 
 /* ---- ROOM / LOBBY ---- */
 socket.on('room', room=>{
